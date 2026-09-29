@@ -52,6 +52,7 @@ export function JaapApp() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
+  const [showAllEntries, setShowAllEntries] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -94,6 +95,7 @@ export function JaapApp() {
   const activeLabel = period === "week" ? "active days" : period === "month" ? "active weeks" : "active months";
 
   function chooseDate(key: string) {
+    if (!todayKey || !/^\d{4}-\d{2}-\d{2}$/.test(key) || key > todayKey || dateKey(fromDateKey(key)) !== key) return;
     setSelectedDate(key);
     setCount(String(entries.find((entry) => entry.date === key)?.count ?? 0));
     setView("log");
@@ -108,7 +110,7 @@ export function JaapApp() {
   }
 
   async function save() {
-    if (!selectedDate || saving || !/^\d+$/.test(count) || !Number.isSafeInteger(Number(count))) {
+    if (!selectedDate || selectedDate > todayKey || saving || !/^\d+$/.test(count) || !Number.isSafeInteger(Number(count))) {
       setNotice("Enter a valid whole number before saving.");
       return;
     }
@@ -157,9 +159,10 @@ export function JaapApp() {
             <section className="primary-column" aria-label="Log a tally">
               <div className="section-heading"><div><h2>Select a day</h2><p>Choose when you practiced</p></div><span className="section-meta">LAST 7 DAYS</span></div>
               <div className="day-grid">{recentDays.map((key) => <button key={key} className={`day-card${selectedDate === key ? " selected" : ""}`} onClick={() => chooseDate(key)} aria-pressed={selectedDate === key}><span>{key === todayKey ? "TODAY" : formatDate(key, { weekday: "short" }).toUpperCase()}</span><strong>{fromDateKey(key).getDate()}</strong><i className={entries.some((entry) => entry.date === key) ? "filled" : ""} /></button>)}</div>
+              <div className="date-picker-row"><div><label htmlFor="entry-date">Choose any past date</label><span>Add a new tally or update one you saved earlier.</span></div><input id="entry-date" type="date" max={todayKey || undefined} value={selectedDate} onChange={(event) => chooseDate(event.target.value)} /></div>
               <section className="counter-card"><div className="card-top"><div><span className="card-eyebrow">{selectedEntry ? "SAVED ENTRY" : "TODAY'S INTENTION"}</span><h2>{selectedDate ? formatDate(selectedDate, { weekday: "long", month: "long", day: "numeric" }) : "Today"}</h2></div><span className="sparkle">✧</span></div><div className="counter-body"><p>How many jaap did you complete?</p><div className="counter-control"><button aria-label="Decrease count" onClick={() => setCount(String(Math.max(0, numericCount - 1)))}>−</button><input aria-label="Jaap count" type="number" min="0" step="1" value={count} onChange={(event) => setCount(event.target.value)} /><button aria-label="Increase count" onClick={() => setCount(String(numericCount + 1))}>+</button></div><div className="quick-add" aria-label="Quick add">{[1, 11, 108].map((amount) => <button key={amount} onClick={() => setCount(String(numericCount + amount))}>+ {amount}</button>)}</div><button className="save-button" disabled={saving || loading} onClick={save}>{saving ? "Saving…" : selectedEntry ? "Update tally" : "Save tally"}<span aria-hidden="true">↗</span></button><p className="save-notice" role="status">{notice || "Your practice, at your pace."}</p></div></section>
             </section>
-            <section className="secondary-column" aria-label="Recent tallies"><div className="section-heading"><div><h2>Recent tallies</h2><p>Your practice, day by day</p></div><span className="section-meta">{entries.length} SAVED</span></div><div className="history-card">{loading ? <div className="empty-history">Loading your tallies…</div> : entries.length ? entries.slice(0, 8).map((entry) => <button className="history-row" key={entry.date} onClick={() => chooseDate(entry.date)}><span className="date-tile"><strong>{fromDateKey(entry.date).getDate()}</strong><small>{formatDate(entry.date, { month: "short" }).toUpperCase()}</small></span><span className="history-date"><strong>{formatDate(entry.date, { weekday: "long" })}</strong><small>{formatDate(entry.date, { month: "long", day: "numeric", year: "numeric" })}</small></span><strong className="history-count">{entry.count.toLocaleString()}</strong><span className="row-arrow">›</span></button>) : <div className="empty-history"><span>✦</span><strong>Your first tally starts here.</strong><p>Choose a number and save it when you are ready.</p></div>}</div><div className="quiet-card"><span>✦</span><p>“Small moments, repeated daily, become a meaningful practice.”</p></div></section>
+            <section className="secondary-column" aria-label="Recent tallies"><div className="section-heading"><div><h2>Recent tallies</h2><p>Your practice, day by day</p></div><span className="section-meta">{entries.length} SAVED</span></div><div className="history-card">{loading ? <div className="empty-history">Loading your tallies…</div> : entries.length ? (showAllEntries ? entries : entries.slice(0, 8)).map((entry) => <button className="history-row" key={entry.date} onClick={() => chooseDate(entry.date)}><span className="date-tile"><strong>{fromDateKey(entry.date).getDate()}</strong><small>{formatDate(entry.date, { month: "short" }).toUpperCase()}</small></span><span className="history-date"><strong>{formatDate(entry.date, { weekday: "long" })}</strong><small>{formatDate(entry.date, { month: "long", day: "numeric", year: "numeric" })}</small></span><strong className="history-count">{entry.count.toLocaleString()}</strong><span className="row-arrow">›</span></button>) : <div className="empty-history"><span>✦</span><strong>Your first tally starts here.</strong><p>Choose a number and save it when you are ready.</p></div>}{entries.length > 8 && <button className="show-all-button" onClick={() => setShowAllEntries((current) => !current)}>{showAllEntries ? "Show recent tallies" : `Show all ${entries.length} tallies`}</button>}</div><div className="quiet-card"><span>✦</span><p>“Small moments, repeated daily, become a meaningful practice.”</p></div></section>
           </div>
         </> : <>
           <div className="page-heading"><div><span className="eyebrow">YOUR SPACE <span className="eyebrow-line" /></span><h1>Practice overview<span className="accent">.</span></h1><p>See the rhythm you have built, one day at a time.</p></div><div className="all-time"><strong>{allTime.toLocaleString()}</strong><span>ALL-TIME JAAP</span></div></div>

@@ -1,0 +1,70 @@
+.date-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: -6px 0 23px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+}
+
+.date-picker-row label,
+.date-picker-row span {
+  display: block;
+}
+
+.date-picker-row label {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.date-picker-row span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.date-picker-row input {
+  min-width: 158px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--soft);
+  color: var(--text);
+  color-scheme: light;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dark .date-picker-row input {
+  color-scheme: dark;
+}
+
+.show-all-button {
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--purple);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.show-all-button:hover {
+  background: var(--soft);
+}
+
+@media (max-width: 520px) {
+  .date-picker-row {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .date-picker-row input {
+    width: 100%;
+  }
+}

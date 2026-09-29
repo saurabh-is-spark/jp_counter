@@ -2,6 +2,8 @@
 
 The Next.js web app for daily jaap tallies and practice insights.
 
+Use the date picker to add or edit a tally for any past date. The seven-day cards are quick shortcuts, and **Show all tallies** reveals older saved entries.
+
 ## Run locally
 
 Requires Node.js 20.9 or newer.
