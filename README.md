@@ -4,6 +4,16 @@ The Next.js web app for daily jaap tallies and practice insights.
 
 Use the date picker to add or edit a tally for any past date. The seven-day cards are quick shortcuts, and **Show all tallies** reveals older saved entries.
 
+## Dashboard and targets
+
+The dashboard includes week, month, and year navigation, comparisons with the previous period, daily averages including zero days, consistency, current and longest streaks, and an 84-day activity map. Click a chart bar or activity square to edit its tally; yearly bars open the selected month.
+
+Weekly targets repeat Monday–Sunday; monthly targets repeat each calendar month. The overall goal is a lifetime jaap total. Targets are saved in the signed-in account's Supabase user metadata as `jaap_targets`, so they load across devices without a database migration or new Vercel environment variables. Metadata is used only for personal preferences, never for authorization. Failed saves keep the editor open so users can retry.
+
+Goal estimates use the last 28 completed calendar days, or all completed days since the first saved entry if shorter. Days without tallies count as zero; today's partial tally is excluded from the pace, but included in lifetime progress. A planned daily pace lets users explore another estimate. Forecasts are estimates, and fewer than seven days of history are marked as an early estimate.
+
+The custom calendar supports month and year selection, saved-entry markers, future-date limits, arrow-key navigation, Page Up/Down jumps of four weeks, and Escape to close. It uses no native browser date input.
+
 ## Run locally
 
 Requires Node.js 20.9 or newer.

@@ -1,70 +1,33 @@
-.date-picker-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  margin: -6px 0 23px;
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--paper);
+.date-picker-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:20px 0}
+.date-picker-row>div:first-child{display:grid;gap:7px}
+.date-picker-row strong{font-size:12px}
+.date-picker-row>div:first-child span{font-size:10px;color:var(--muted);line-height:1.6}
+.calendar-root{position:relative;flex-shrink:0}
+.calendar-root button{font:inherit;cursor:pointer;color:var(--text)}
+.calendar-trigger{display:flex;gap:12px;align-items:center;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:12px 14px;font-size:12px!important}
+.calendar-trigger>span:first-child{font-weight:600}
+.calendar-popup{position:absolute;right:0;top:calc(100% + 10px);width:304px;padding:18px;box-sizing:border-box;background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:0 15px 50px #11182b25;z-index:40}
+.calendar-heading{display:flex;align-items:center;gap:5px;margin-bottom:16px}
+.calendar-heading button{border:0;background:var(--soft);border-radius:8px;padding:7px 12px;font-size:18px}
+.calendar-heading .calendar-title{background:none;font-size:12px;font-weight:700;flex:1;padding:8px 0}
+.calendar-weekdays,.calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.calendar-weekdays{font-size:10px;text-align:center;color:var(--muted);margin-bottom:8px}
+.calendar-days button{position:relative;aspect-ratio:1;border:0;border-radius:8px;background:transparent;font-size:11px}
+.calendar-days button.outside{color:var(--muted)}
+.calendar-days button.today{box-shadow:inset 0 0 0 1px var(--purple)}
+.calendar-days button:hover:not(:disabled),.calendar-options button:hover:not(:disabled){background:var(--soft)}
+.calendar-days button.selected{background:var(--purple);color:var(--paper)}
+.calendar-days button.selected:hover{background:var(--purple)}
+.calendar-days i{position:absolute;bottom:4px;left:calc(50% - 2px);width:4px;height:4px;border-radius:50%}
+.calendar-days i.saved{background:currentColor}
+.calendar-options{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.calendar-options button{border:0;background:transparent;border-radius:8px;font-size:12px;padding:16px 5px}
+.calendar-footer{border-top:1px solid var(--line);margin-top:14px;padding-top:12px;display:flex;justify-content:space-between}
+.calendar-footer button{border:0;background:transparent;color:var(--purple);font-size:11px;padding:5px}
+.show-all-button{display:block;width:100%;padding:18px;color:var(--purple);background:transparent;border:0;font-size:12px;cursor:pointer}
+@media(max-width:600px){.date-picker-row{align-items:flex-start;flex-direction:column;gap:12px}
+.calendar-popup{left:0;right:auto;width:min(304px,calc(100vw - 48px))}
 }
 
-.date-picker-row label,
-.date-picker-row span {
-  display: block;
-}
-
-.date-picker-row label {
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.date-picker-row span {
-  margin-top: 3px;
-  color: var(--muted);
-  font-size: 9px;
-}
-
-.date-picker-row input {
-  min-width: 158px;
-  padding: 9px 10px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  background: var(--soft);
-  color: var(--text);
-  color-scheme: light;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.dark .date-picker-row input {
-  color-scheme: dark;
-}
-
-.show-all-button {
-  width: 100%;
-  padding: 14px;
-  border: 0;
-  border-top: 1px solid var(--line);
-  background: var(--paper);
-  color: var(--purple);
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.show-all-button:hover {
-  background: var(--soft);
-}
-
-@media (max-width: 520px) {
-  .date-picker-row {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .date-picker-row input {
-    width: 100%;
-  }
+@media(max-width:600px){.calendar-popup{position:fixed;left:15px;right:auto;top:auto;bottom:80px;width:min(340px,calc(100vw - 30px));max-height:calc(100dvh - 110px);overflow-y:auto}
 }
