@@ -12,9 +12,9 @@ export function sortEntries(entries: Entry[]) {
   return [...entries].sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export function readEntries(): Entry[] {
+export function readEntries(userId?: string): Entry[] {
   try {
-    const raw: unknown = JSON.parse(localStorage.getItem(storageKey) ?? "[]");
+    const raw: unknown = JSON.parse(localStorage.getItem(userId ? `${storageKey}/${userId}` : storageKey) ?? "[]");
     if (!Array.isArray(raw)) return [];
     return sortEntries(raw.filter((item): item is Entry =>
       typeof item === "object" && item !== null &&
@@ -26,8 +26,8 @@ export function readEntries(): Entry[] {
   }
 }
 
-export function writeEntries(entries: Entry[]) {
-  localStorage.setItem(storageKey, JSON.stringify(sortEntries(entries)));
+export function writeEntries(entries: Entry[], userId: string) {
+  localStorage.setItem(`${storageKey}/${userId}`, JSON.stringify(sortEntries(entries)));
 }
 
 export function mergeEntries(local: Entry[], remote: Entry[]) {
@@ -39,19 +39,18 @@ export function mergeEntries(local: Entry[], remote: Entry[]) {
   return sortEntries([...byDate.values()]);
 }
 
-export async function cloudUserId() {
-  if (!supabase) return null;
+export async function cloudUserId(expectedUserId: string) {
+  if (!supabase) throw new Error("Supabase is not configured.");
   const { data: session, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
-  if (session.session?.user) return session.session.user.id;
-  const { data, error } = await supabase.auth.signInAnonymously();
-  if (error) throw error;
-  return data.user?.id ?? null;
+  const user = session.session?.user;
+  if (!user || user.is_anonymous || user.id !== expectedUserId) throw new Error("Please log in again before saving.");
+  return user.id;
 }
 
-export async function syncEntries(local: Entry[]) {
+export async function syncEntries(local: Entry[], expectedUserId: string) {
   if (!supabase) return { entries: local, connected: false };
-  const userId = await cloudUserId();
+  const userId = await cloudUserId(expectedUserId);
   if (!userId) throw new Error("Unable to start a cloud session.");
   const { data, error } = await supabase.from("jaap_entries")
     .select("entry_date,count,updated_at").eq("user_id", userId);
@@ -72,13 +71,13 @@ export async function syncEntries(local: Entry[]) {
     );
     if (uploadError) throw uploadError;
   }
-  writeEntries(merged);
+  writeEntries(merged, userId);
   return { entries: merged, connected: true };
 }
 
-export async function saveCloudEntry(entry: Entry) {
+export async function saveCloudEntry(entry: Entry, expectedUserId: string) {
   if (!supabase) return false;
-  const userId = await cloudUserId();
+  const userId = await cloudUserId(expectedUserId);
   if (!userId) throw new Error("Unable to start a cloud session.");
   const { error } = await supabase.from("jaap_entries").upsert(
     { user_id: userId, entry_date: entry.date, count: entry.count, updated_at: entry.updatedAt },

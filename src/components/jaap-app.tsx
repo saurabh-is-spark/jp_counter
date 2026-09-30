@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { dateKey, formatDate, fromDateKey, shiftDays } from "@/lib/date";
 import { Entry, readEntries, saveCloudEntry, sortEntries, syncEntries, writeEntries } from "@/lib/entries";
 
@@ -40,7 +41,7 @@ function streakFor(entries: Entry[], today: Date) {
   return streak;
 }
 
-export function JaapApp() {
+export function JaapApp({ user, onLogout }: { user: User; onLogout: () => Promise<void> }) {
   const [todayKey, setTodayKey] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -53,33 +54,36 @@ export function JaapApp() {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [showAllEntries, setShowAllEntries] = useState(false);
+  const [legacyCount, setLegacyCount] = useState(0);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     Promise.resolve().then(async () => {
       const today = dateKey();
-      const local = readEntries();
+      const local = readEntries(user.id);
       if (!mounted) return;
       setTodayKey(today);
       setSelectedDate(today);
       setCount(String(local.find((entry) => entry.date === today)?.count ?? 0));
       setDark(localStorage.getItem("@jaap-tally/theme") === "dark");
       setEntries(local);
+      setLegacyCount(localStorage.getItem(`@jaap-tally/imported/${user.id}`) ? 0 : readEntries().length);
       try {
-        const { entries: synced, connected: isConnected } = await syncEntries(local);
+        const { entries: synced, connected: isConnected } = await syncEntries(local, user.id);
         if (mounted) {
           setEntries(synced);
           setCount(String(synced.find((entry) => entry.date === today)?.count ?? 0));
           setConnected(isConnected);
         }
       } catch {
-        if (mounted) setConnected(false);
+        if (mounted) { setConnected(false); setNotice("Cloud sync is unavailable. Your account's browser copy is still available."); }
       } finally {
         if (mounted) setLoading(false);
       }
     });
     return () => { mounted = false; };
-  }, []);
+  }, [user.id]);
 
   const selectedEntry = entries.find((entry) => entry.date === selectedDate);
 
@@ -119,10 +123,10 @@ export function JaapApp() {
     const entry: Entry = { date: selectedDate, count: numericCount, updatedAt: new Date().toISOString() };
     const next = sortEntries([...entries.filter((item) => item.date !== selectedDate), entry]);
     try {
-      writeEntries(next);
+      writeEntries(next, user.id);
       setEntries(next);
       try {
-        const synced = await saveCloudEntry(entry);
+        const synced = await saveCloudEntry(entry, user.id);
         setConnected(synced);
         setNotice(synced ? "Tally saved and synced." : "Tally saved on this browser.");
       } catch {
@@ -134,6 +138,34 @@ export function JaapApp() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function logout() {
+    setLoggingOut(true);
+    try { await onLogout(); }
+    catch (cause) { setNotice(cause instanceof Error ? cause.message : "Could not log out. Please try again."); }
+    finally { setLoggingOut(false); }
+  }
+
+  async function importLegacy() {
+    setSaving(true);
+    try {
+      // Refresh the account first so old browser entries cannot replace cloud dates.
+      const current = await syncEntries(readEntries(user.id), user.id);
+      const existingDates = new Set(current.entries.map((entry) => entry.date));
+      const missing = readEntries().filter((entry) => !existingDates.has(entry.date));
+      const next = sortEntries([...current.entries, ...missing]);
+      writeEntries(next, user.id);
+      setEntries(next);
+      setCount(String(next.find((entry) => entry.date === selectedDate)?.count ?? 0));
+      const synced = await syncEntries(next, user.id);
+      setEntries(synced.entries);
+      localStorage.setItem(`@jaap-tally/imported/${user.id}`, "true");
+      setLegacyCount(0);
+      setNotice(`${missing.length} old browser tallies imported. Existing account dates were kept.`);
+    } catch {
+      setNotice("Import could not finish. Your old tallies are still saved in this browser; try again.");
+    } finally { setSaving(false); }
   }
 
   return <div className={`app-shell${dark ? " dark" : ""}`}>
@@ -151,8 +183,9 @@ export function JaapApp() {
     </aside>
 
     <div className="main-area">
-      <header className="topbar"><div className="mobile-brand">✦ <strong>Jaap Tally</strong></div><span className="topbar-label">A SPACE FOR STILLNESS</span><div className="topbar-right"><span className={`status-dot${connected ? " online" : ""}`} /><span>{connected ? "Cloud connected" : "Saved in this browser"}</span><span className="avatar">J</span></div></header>
+      <header className="topbar"><div className="mobile-brand">✦ <strong>Jaap Tally</strong></div><span className="topbar-label">A SPACE FOR STILLNESS</span><div className="topbar-right"><span className={`status-dot${connected ? " online" : ""}`} /><span>{connected ? "Cloud connected" : "Saved in this browser"}</span><details className="account-details"><summary>{user.email ?? "My account"}</summary><div><strong>{user.email}</strong><small>User ID</small><code>{user.id}</code></div></details><button className="logout-button" disabled={loggingOut || saving} onClick={logout}>{loggingOut ? "Logging out…" : "Log out"}</button></div></header>
       <main className="content">
+        {legacyCount > 0 && <div className="legacy-banner"><div><strong>Bring your old browser tallies into this account</strong><p>{legacyCount} tallies are saved from before login was added. Import only if these belong to you. Dates already in your account will be kept.</p></div><button disabled={loading || saving || !connected} onClick={importLegacy}>{saving ? "Please wait…" : "Import old tallies"}</button></div>}
         {view === "log" ? <>
           <div className="page-heading"><div><span className="eyebrow">DAILY PRACTICE <span className="eyebrow-line" /></span><h1>Keep your rhythm<span className="accent">.</span></h1><p>A calm place to show up for your daily jaap.</p></div><div className="heading-decoration" aria-hidden="true">✦</div></div>
           <div className="log-grid">
