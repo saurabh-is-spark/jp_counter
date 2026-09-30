@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./date-picker.css";
 import "./auth.css";
+import "./dashboard.css";
 
 export const metadata: Metadata = {
   title: "Jaap Tally",
